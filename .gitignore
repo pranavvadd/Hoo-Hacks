@@ -1,0 +1,10 @@
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+# Local Lyria / smoke outputs (large WAVs)
+Ai Integrations/_*.wav
+Ai Integrations/_*.mp3
+Ai Integrations/out/
+Ai Integrations/learnlens_smoke_output*.png
