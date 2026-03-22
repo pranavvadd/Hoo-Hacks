@@ -3,6 +3,7 @@ import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { OwlMascot } from "@/components/OwlMascot";
 import { Music, Video, ArrowLeft, Loader2 } from "lucide-react";
 import { useI18n } from "@/i18n";
+import { apiUrl, wsUrl } from "@/lib/api-base";
 
 type OutputType = "song" | "video";
 
@@ -31,9 +32,8 @@ export default function Result() {
   useEffect(() => {
     if (!jobId) return;
 
-    // Try WebSocket first — use current host so this works in dev and prod
-    const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws/${jobId}`);
+    // Try WebSocket first
+    const ws = new WebSocket(wsUrl(`/ws/${jobId}`));
     wsRef.current = ws;
 
     ws.onmessage = (e) => {
@@ -63,7 +63,7 @@ export default function Result() {
   const pollStatus = () => {
     pollRef.current = setInterval(async () => {
       try {
-        const res = await fetch(`/status/${jobId}`);
+        const res = await fetch(apiUrl(`/status/${jobId}`));
         const data = await res.json();
         if (data.status === "done") {
           clearInterval(pollRef.current!);

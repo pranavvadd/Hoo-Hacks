@@ -5,6 +5,26 @@
   "outputDirectory": "dist/spa",
   "rewrites": [
     {
+      "source": "/generate",
+      "destination": "https://hoo-hacks.onrender.com/generate"
+    },
+    {
+      "source": "/output/:path*",
+      "destination": "https://hoo-hacks.onrender.com/output/:path*"
+    },
+    {
+      "source": "/status/:path*",
+      "destination": "https://hoo-hacks.onrender.com/status/:path*"
+    },
+    {
+      "source": "/health",
+      "destination": "https://hoo-hacks.onrender.com/health"
+    },
+    {
+      "source": "/ws/:path*",
+      "destination": "https://hoo-hacks.onrender.com/ws/:path*"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }

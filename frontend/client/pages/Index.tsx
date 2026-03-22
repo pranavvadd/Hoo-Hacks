@@ -4,6 +4,7 @@ import { OwlMascot } from "@/components/OwlMascot";
 import { Music, Video, Sparkles, BookOpen } from "lucide-react";
 import { ChatContext } from "@/components/Layout";
 import { useI18n } from "@/i18n";
+import { apiUrl } from "@/lib/api-base";
 
 export default function Index() {
   const { t, lang } = useI18n();
@@ -63,12 +64,28 @@ export default function Index() {
 
     setLoading(true);
     try {
-      const res = await fetch("/generate", {
+      const res = await fetch(apiUrl("/generate"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic: prompt, output_type: selectedType, language: lang }),
       });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Request failed (${res.status}): ${text || "empty response"}`);
+      }
+
+      const contentType = res.headers.get("content-type") || "";
+      if (!contentType.toLowerCase().includes("application/json")) {
+        const text = await res.text();
+        throw new Error(`Expected JSON response but got: ${text || "empty response"}`);
+      }
+
       const { job_id } = await res.json();
+      if (!job_id) {
+        throw new Error("Missing job_id in response");
+      }
+
       navigate(`/result/${job_id}?type=${selectedType}&topic=${encodeURIComponent(prompt)}`);
     } catch (err) {
       console.error("Failed to start generation", err);
