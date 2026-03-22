@@ -51,4 +51,10 @@ def upload_media(data: bytes, content_type: str, job_id: str = None) -> str:
         ContentType=content_type,
     )
 
-    return f"https://{S3_BUCKET_NAME}.s3.{S3_REGION}.amazonaws.com/{key}"
+    # Generate a pre-signed URL valid for 24 hours (no public bucket policy needed)
+    url = s3.generate_presigned_url(
+        "get_object",
+        Params={"Bucket": S3_BUCKET_NAME, "Key": key},
+        ExpiresIn=86400,
+    )
+    return url
