@@ -43,7 +43,7 @@ def _call_gemini(system_prompt: str, user_prompt: str) -> Dict[str, Any]:
 
     url = (
         f"https://generativelanguage.googleapis.com/v1beta/models/"
-        f"gemini-2.0-flash:generateContent?key={api_key}"
+        f"gemini-2.5-flash:generateContent?key={api_key}"
     )
     payload = {
         "system_instruction": {"parts": [{"text": system_prompt}]},
