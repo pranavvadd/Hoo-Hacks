@@ -22,7 +22,6 @@ google-cloud-aiplatform>=1.50.0  # Vertex AI SDK
 google-cloud-texttospeech>=2.16.0  # Google Cloud TTS
 runwayml>=0.3.0        # Runway Gen-4 video
 elevenlabs>=1.0.0      # ElevenLabs music/TTS
-ideogram-ai>=0.1.0     # Ideogram image generation (via httpx if not available)
 
 # Testing
 pytest>=8.0.0
