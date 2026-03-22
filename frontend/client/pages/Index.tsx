@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { OwlMascot } from "@/components/OwlMascot";
 import { Music, Image, Video, Sparkles } from "lucide-react";
 import { ChatContext } from "@/components/Layout";
@@ -10,8 +10,25 @@ export default function Index() {
   const [showOptions, setShowOptions] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const chatContext = useContext(ChatContext);
   const prevNewChatKeyRef = useRef(chatContext?.newChatKey || 0);
+
+  useEffect(() => {
+    // Handle URL parameters for pre-filling prompt
+    const subject = searchParams.get('subject');
+    const concept = searchParams.get('concept');
+    const subtopic = searchParams.get('subtopic');
+
+    if (subject && concept) {
+      let prefilledPrompt = `Teach me about ${concept}`;
+      if (subtopic) {
+        prefilledPrompt = `Teach me about ${subtopic} in ${concept}`;
+      }
+      setPrompt(prefilledPrompt);
+      setShowOptions(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (chatContext && chatContext.newChatKey !== prevNewChatKeyRef.current) {
@@ -35,6 +52,15 @@ export default function Index() {
 
   const handleGenerateMedia = async () => {
     if (!prompt.trim() || !selectedType) return;
+
+    // Save to recent chats
+    if (chatContext?.addChat) {
+      chatContext.addChat({
+        title: prompt.length > 30 ? prompt.substring(0, 30) + "..." : prompt,
+        timestamp: "Just now",
+      });
+    }
+
     setLoading(true);
     try {
       const res = await fetch("/generate", {

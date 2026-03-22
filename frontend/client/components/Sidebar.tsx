@@ -1,11 +1,6 @@
-import { useState } from "react";
-import { Menu, X, Plus, Search, Folder, Zap, MessageCircle, Trash2 } from "lucide-react";
-
-export interface ChatItem {
-  id: string;
-  title: string;
-  timestamp: string;
-}
+import { useState, useContext, useMemo } from "react";
+import { Menu, X, Plus, Search, MessageCircle, Trash2 } from "lucide-react";
+import { ChatContext, ChatItem } from "./Layout";
 
 interface SidebarProps {
   isMobile?: boolean;
@@ -14,52 +9,53 @@ interface SidebarProps {
 
 export const Sidebar = ({ isMobile = false, onNewChat }: SidebarProps) => {
   const [isOpen, setIsOpen] = useState(!isMobile);
-  const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [chats, setChats] = useState<ChatItem[]>([
-    {
-      id: "1",
-      title: "Spanish Vocabulary Lesson",
-      timestamp: "Today",
-    },
-    {
-      id: "2",
-      title: "Ancient Egypt Documentary",
-      timestamp: "Yesterday",
-    },
-    {
-      id: "3",
-      title: "Python Programming Basics",
-      timestamp: "2 days ago",
-    },
-    {
-      id: "4",
-      title: "Renaissance Art History",
-      timestamp: "1 week ago",
-    },
-    {
-      id: "5",
-      title: "Marine Biology Deep Dive",
-      timestamp: "2 weeks ago",
-    },
-  ]);
+  const chatContext = useContext(ChatContext);
+
+  const chats = chatContext?.chats || [];
+  const addChat = chatContext?.addChat;
+  const deleteChat = chatContext?.deleteChat;
+
+  // Filter and sort chats based on search query
+  const filteredChats = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return chats;
+    }
+
+    const query = searchQuery.toLowerCase();
+    const matching = [];
+    const nonMatching = [];
+
+    for (const chat of chats) {
+      if (chat.title.toLowerCase().includes(query)) {
+        matching.push(chat);
+      } else {
+        nonMatching.push(chat);
+      }
+    }
+
+    return [...matching, ...nonMatching];
+  }, [chats, searchQuery]);
 
   const handleNewChat = () => {
     onNewChat();
-  };
-
-  const handleSearchClick = () => {
-    setIsSearching(true);
-  };
-
-  const handleSearchBlur = () => {
-    if (!searchQuery.trim()) {
-      setIsSearching(false);
-    }
+    setSearchQuery(""); // Clear search when starting new chat
   };
 
   const handleDeleteChat = (chatId: string) => {
-    setChats(chats.filter(chat => chat.id !== chatId));
+    if (deleteChat) {
+      deleteChat(chatId);
+    }
+  };
+
+  const handleChatClick = (chat: ChatItem) => {
+    // TODO: Implement chat loading functionality
+    console.log("Clicked chat:", chat.title);
+    // For now, just clear search and close mobile sidebar
+    setSearchQuery("");
+    if (isMobile) {
+      setIsOpen(false);
+    }
   };
 
   return (
@@ -108,61 +104,40 @@ export const Sidebar = ({ isMobile = false, onNewChat }: SidebarProps) => {
               <span>New Chat</span>
             </button>
 
-            {/* Search button/input */}
-            {!isSearching ? (
-              <button
-                onClick={handleSearchClick}
-                className="w-full flex items-center gap-3 px-4 py-3 border-2 border-hooslearn-blue 
-                           text-hooslearn-blue rounded-lg hover:bg-blue-50 transition-all duration-200 font-medium cursor-text"
-              >
-                <Search size={20} />
-                <span>Search Chats</span>
-              </button>
-            ) : (
+            {/* Search input - always visible */}
+            <div className="relative">
               <input
                 type="text"
-                autoFocus
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onBlur={handleSearchBlur}
                 placeholder="Search chats..."
-                className="w-full px-4 py-3 border-2 border-hooslearn-blue rounded-lg 
+                className="w-full pl-10 pr-4 py-3 border-2 border-hooslearn-blue rounded-lg 
                            focus:outline-none focus:ring-2 focus:ring-hooslearn-blue focus:ring-offset-2
                            placeholder-gray-400 font-medium"
               />
-            )}
+              <Search
+                size={20}
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-hooslearn-blue"
+              />
+            </div>
           </div>
 
-          {/* Menu items section */}
-          <div className="p-4 space-y-2 border-b-2 border-hooslearn-orange">
-            <button
-              className="w-full flex items-center gap-3 px-4 py-3 text-hooslearn-blue 
-                         hover:bg-orange-50 rounded-lg transition-all duration-200 font-medium text-left"
-            >
-              <Folder size={20} />
-              <span>Projects</span>
-            </button>
-
-            <button
-              className="w-full flex items-center gap-3 px-4 py-3 text-hooslearn-blue 
-                         hover:bg-orange-50 rounded-lg transition-all duration-200 font-medium text-left"
-            >
-              <Zap size={20} />
-              <span>Artifacts</span>
-            </button>
-          </div>
-
-          {/* Chat history section */}
+          {/* Chat history section - moved up, takes more space */}
           <div className="flex-1 p-4 overflow-y-auto">
             <h3 className="text-hooslearn-blue font-wild-west text-lg mb-3">
-              Recent Chats
+              {searchQuery.trim() ? `Search Results (${filteredChats.length})` : "Recent Chats"}
             </h3>
             <div className="space-y-2">
-              {chats.map((chat) => (
+              {filteredChats.map((chat, index) => (
                 <div
                   key={chat.id}
+                  onClick={() => handleChatClick(chat)}
                   className={`group relative p-3 rounded-lg transition-all duration-200 cursor-pointer
-                    hover:bg-orange-50 text-hooslearn-blue`}
+                    hover:bg-orange-50 text-hooslearn-blue ${
+                      searchQuery.trim() && chat.title.toLowerCase().includes(searchQuery.toLowerCase()) && index < chats.filter(c => c.title.toLowerCase().includes(searchQuery.toLowerCase())).length
+                        ? "bg-orange-100 border-l-4 border-hooslearn-orange"
+                        : ""
+                    }`}
                 >
                   <div className="flex items-start gap-2 min-w-0">
                     <MessageCircle
@@ -192,6 +167,12 @@ export const Sidebar = ({ isMobile = false, onNewChat }: SidebarProps) => {
                   </button>
                 </div>
               ))}
+              {filteredChats.length === 0 && searchQuery.trim() && (
+                <div className="text-center py-8 text-gray-500">
+                  <MessageCircle size={48} className="mx-auto mb-2 opacity-50" />
+                  <p>No chats found matching "{searchQuery}"</p>
+                </div>
+              )}
             </div>
           </div>
 
