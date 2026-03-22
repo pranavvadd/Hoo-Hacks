@@ -9,7 +9,7 @@ const SUBJECTS = ["Math", "Science", "History", "English", "Coding"] as const;
 export default function Index() {
   const [prompt, setPrompt] = useState("");
   const [selectedType, setSelectedType] = useState<"song" | "video" | null>(null);
-  const [showOptions, setShowOptions] = useState(false);
+  const [showOptions, setShowOptions] = useState(true);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -81,9 +81,7 @@ export default function Index() {
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault(); // Prevent default form submission behavior
-      if (!showOptions && prompt.trim()) {
-        handleSubmit();
-      } else if (showOptions && selectedType) {
+      if (selectedType) {
         handleGenerateMedia();
       }
     }
@@ -145,16 +143,6 @@ export default function Index() {
 
           {/* Submit button */}
           <div className="mb-6">
-            <button
-              onClick={handleSubmit}
-              disabled={!prompt.trim()}
-              className="w-full py-3 sm:py-4 bg-hooslearn-orange hover:bg-hooslearn-orange-dark 
-                         disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-wild-west 
-                         text-lg sm:text-xl rounded-full transition-all duration-200 
-                         shadow-lg hover:shadow-xl transform hover:scale-105 disabled:hover:scale-100"
-            >
-              🤠 Let's Learn! 🤠
-            </button>
           </div>
 
           {/* Content type selection - shown after clicking Let's Learn */}
@@ -205,7 +193,7 @@ export default function Index() {
                       : "bg-gray-300 text-gray-500 cursor-not-allowed"
                   }`}
                 >
-                  {loading ? "Saddling up..." : "🎨 Generate Media 🎨"}
+                  {loading ? "Saddling up..." : "🤠 Let's Learn! 🤠"}
                 </button>
               </div>
             </div>
