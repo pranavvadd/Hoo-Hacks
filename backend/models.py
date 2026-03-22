@@ -7,7 +7,6 @@ from pydantic import BaseModel, Field
 
 
 class OutputType(str, Enum):
-    image = "image"
     song = "song"
     video = "video"
 

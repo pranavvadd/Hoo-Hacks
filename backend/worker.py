@@ -27,7 +27,6 @@ from infra import upload_media, publish_progress
 
 # Maps output_type string to MIME type for upload_media
 MEDIA_CONTENT_TYPES = {
-    "image": "image/png",
     "song":  "audio/wav",
     "video": "video/mp4",
 }
@@ -68,25 +67,6 @@ def _generate_placeholder_song_wav(topic: str, duration_seconds: float = 6.0) ->
 
         return buf.getvalue()
 
-
-def _generate_placeholder_image_png() -> bytes:
-    """Generate a simple valid PNG image using ffmpeg."""
-    with tempfile.TemporaryDirectory() as td:
-        out_path = os.path.join(td, "placeholder.png")
-        cmd = [
-            "ffmpeg",
-            "-y",
-            "-f",
-            "lavfi",
-            "-i",
-            "testsrc2=s=1024x576:r=1",
-            "-frames:v",
-            "1",
-            out_path,
-        ]
-        subprocess.run(cmd, check=True, capture_output=True)
-        with open(out_path, "rb") as f:
-            return f.read()
 
 
 def _generate_colored_placeholder_png(color: str) -> bytes:
@@ -183,16 +163,6 @@ def _generate_placeholder_video_mp4() -> bytes:
             return f.read()
 
 
-def _build_image_prompt(topic: str, prompt_struct: dict) -> str:
-    visual = str(prompt_struct.get("visual_description", "")).strip()
-    notes = str(prompt_struct.get("pedagogy_notes", "")).strip()
-    parts = [f"Educational illustration about: {topic}"]
-    if visual:
-        parts.append(f"Visual direction: {visual}")
-    if notes:
-        parts.append(f"Teaching notes: {notes}")
-    return "\n".join(parts)
-
 
 def _build_video_prompt(topic: str, prompt_struct: dict) -> str:
     style = str(prompt_struct.get("style", "educational explainer")).strip()
@@ -213,7 +183,13 @@ def _build_video_prompt(topic: str, prompt_struct: dict) -> str:
 
 
 def _build_video_narration(topic: str, prompt_struct: dict) -> str:
-    """Build plain narration text instead of instruction-style generation prompts."""
+    """Build plain narration text for TTS — prefers Gemini's full_narration field."""
+    # Prefer the dedicated full_narration field from Gemini
+    full_narration = str(prompt_struct.get("full_narration", "")).strip()
+    if full_narration:
+        return full_narration
+
+    # Stitch scene narrations together as fallback
     scenes = prompt_struct.get("scenes") or []
     narration_chunks = []
 
@@ -229,8 +205,10 @@ def _build_video_narration(topic: str, prompt_struct: dict) -> str:
         return f"Today we are learning about {topic}. " + " ".join(narration_chunks)
 
     return (
-        f"Today we are learning about {topic}. "
-        f"In this lesson, we explore the key ideas clearly with simple examples and a short recap."
+        f"Welcome! Today we are learning about {topic}. "
+        f"This concept plays an important role and understanding it will help you connect ideas across the subject. "
+        f"Let's walk through the key points clearly and build up your knowledge step by step. "
+        f"By the end of this lesson, you'll have a solid grasp of the fundamentals. Let's get started!"
     )
 
 
@@ -260,19 +238,25 @@ def _build_slideshow_slides(prompt_struct: dict) -> list[tuple[str, str, str]]:
 
 
 def _build_song_prompt(topic: str, prompt_struct: dict) -> str:
+    # Prefer the dedicated music_prompt field from Gemini if present
+    music_prompt = str(prompt_struct.get("music_prompt", "")).strip()
+    if music_prompt:
+        return music_prompt
+
+    # Build from individual fields as fallback
+    style = str(prompt_struct.get("style", "upbeat educational acoustic-pop")).strip()
+    mood = str(prompt_struct.get("mood", "encouraging and clear")).strip()
     lyrics_brief = str(prompt_struct.get("lyrics_brief", "")).strip()
-    style = str(prompt_struct.get("style", "educational song")).strip()
-    mood = str(prompt_struct.get("mood", "clear and engaging")).strip()
 
     parts = [
-        f"Create a short educational song about: {topic}",
-        f"Style: {style}",
-        f"Mood: {mood}",
+        f"An educational song about: {topic}.",
+        f"Style: {style}.",
+        f"Mood: {mood}.",
     ]
     if lyrics_brief:
-        parts.append(f"Lyrics direction: {lyrics_brief}")
+        parts.append(f"Content: {lyrics_brief}")
 
-    return "\n".join(parts)
+    return " ".join(parts)
 
 
 def _generate_song_audio(topic: str, prompt_struct: dict) -> Tuple[bytes, str, str]:
@@ -305,17 +289,6 @@ def _generate_song_audio(topic: str, prompt_struct: dict) -> Tuple[bytes, str, s
         logger.warning("Real song generation failed (%s); using placeholder WAV fallback.", exc)
         return _generate_placeholder_song_wav(topic), "audio/wav", "fallback"
 
-
-def _generate_image_media(topic: str, prompt_struct: dict) -> Tuple[bytes, str, str]:
-    provider = (os.getenv("LEARNLENS_IMAGE_PROVIDER", "").strip().lower() or None)
-    try:
-        from image_generation import generate_learnlens_image
-
-        result = generate_learnlens_image(_build_image_prompt(topic, prompt_struct), provider=provider)
-        return result.image_bytes, result.mime_type, result.provider
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("Real image generation failed (%s); using placeholder PNG fallback.", exc)
-        return _generate_placeholder_image_png(), "image/png", "fallback"
 
 
 def _generate_video_media(topic: str, prompt_struct: dict) -> Tuple[bytes, str, str]:
@@ -382,9 +355,6 @@ def process_job(job: dict) -> None:
         if output_type is OutputType.song:
             generated_bytes, content_type, song_provider = _generate_song_audio(topic, prompt_struct)
             meta.extra = {"prompt": prompt_struct, "song_provider": song_provider}
-        elif output_type is OutputType.image:
-            generated_bytes, content_type, image_provider = _generate_image_media(topic, prompt_struct)
-            meta.extra = {"prompt": prompt_struct, "image_provider": image_provider}
         elif output_type is OutputType.video:
             generated_bytes, content_type, video_provider = _generate_video_media(topic, prompt_struct)
             meta.extra = {"prompt": prompt_struct, "video_provider": video_provider}

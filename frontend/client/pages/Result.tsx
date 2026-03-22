@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { OwlMascot } from "@/components/OwlMascot";
-import { Music, Image, Video, ArrowLeft, Loader2 } from "lucide-react";
+import { Music, Video, ArrowLeft, Loader2 } from "lucide-react";
 
-type OutputType = "song" | "image" | "video";
+type OutputType = "song" | "video";
 
 interface ProgressEvent {
   event: string;
@@ -83,9 +83,8 @@ export default function Result() {
   const isError = !!error;
 
   const typeIcon = {
-    song:  <Music  className="inline-block mr-2" size={20} />,
-    image: <Image  className="inline-block mr-2" size={20} />,
-    video: <Video  className="inline-block mr-2" size={20} />,
+    song:  <Music className="inline-block mr-2" size={20} />,
+    video: <Video className="inline-block mr-2" size={20} />,
   }[outputType];
 
   return (
@@ -167,12 +166,8 @@ export default function Result() {
                 </div>
               )}
 
-              {outputType === "image" && (
-                <img src={cdnUrl} alt={topic} className="w-full rounded-xl shadow-md mb-4" />
-              )}
-
               {outputType === "video" && (
-                <video controls className="w-full rounded-xl shadow-md mb-4" src={cdnUrl}>
+                <video controls playsInline className="w-full rounded-xl shadow-md mb-4" src={cdnUrl}>
                   Your browser does not support video playback.
                 </video>
               )}

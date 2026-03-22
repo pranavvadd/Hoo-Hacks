@@ -1,12 +1,14 @@
 import { useState, useEffect, useContext, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { OwlMascot } from "@/components/OwlMascot";
-import { Music, Image, Video, Sparkles } from "lucide-react";
+import { Music, Video, Sparkles, BookOpen } from "lucide-react";
 import { ChatContext } from "@/components/Layout";
+
+const SUBJECTS = ["Math", "Science", "History", "English", "Coding"] as const;
 
 export default function Index() {
   const [prompt, setPrompt] = useState("");
-  const [selectedType, setSelectedType] = useState<"song" | "image" | "video" | null>(null);
+  const [selectedType, setSelectedType] = useState<"song" | "video" | null>(null);
   const [showOptions, setShowOptions] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -46,7 +48,7 @@ export default function Index() {
     }
   };
 
-  const handleTypeSelect = (type: "song" | "image" | "video") => {
+  const handleTypeSelect = (type: "song" | "video") => {
     setSelectedType(type);
   };
 
@@ -161,11 +163,11 @@ export default function Index() {
               <p className="text-hooslearn-blue font-wild-west text-lg sm:text-xl mb-4 text-center">
                 How do you wanna learn?
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Song option */}
                 <button
                   onClick={() => handleTypeSelect("song")}
-                  className={`p-6 sm:p-8 rounded-xl transition-all duration-200 flex flex-col items-center justify-center gap-3 
+                  className={`p-6 sm:p-8 rounded-xl transition-all duration-200 flex flex-col items-center justify-center gap-3
                              border-2 font-medium text-sm sm:text-base ${
                     selectedType === "song"
                       ? "bg-hooslearn-orange border-hooslearn-orange text-white shadow-lg scale-105"
@@ -176,24 +178,10 @@ export default function Index() {
                   <span className="font-wild-west text-lg">Song</span>
                 </button>
 
-                {/* Image option */}
-                <button
-                  onClick={() => handleTypeSelect("image")}
-                  className={`p-6 sm:p-8 rounded-xl transition-all duration-200 flex flex-col items-center justify-center gap-3 
-                             border-2 font-medium text-sm sm:text-base ${
-                    selectedType === "image"
-                      ? "bg-hooslearn-orange border-hooslearn-orange text-white shadow-lg scale-105"
-                      : "bg-white border-hooslearn-orange text-hooslearn-blue hover:bg-orange-50"
-                  }`}
-                >
-                  <Image size={32} />
-                  <span className="font-wild-west text-lg">Image</span>
-                </button>
-
                 {/* Video option */}
                 <button
                   onClick={() => handleTypeSelect("video")}
-                  className={`p-6 sm:p-8 rounded-xl transition-all duration-200 flex flex-col items-center justify-center gap-3 
+                  className={`p-6 sm:p-8 rounded-xl transition-all duration-200 flex flex-col items-center justify-center gap-3
                              border-2 font-medium text-sm sm:text-base ${
                     selectedType === "video"
                       ? "bg-hooslearn-orange border-hooslearn-orange text-white shadow-lg scale-105"
@@ -222,6 +210,28 @@ export default function Index() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* Browse by Subject */}
+        <div className="mt-8">
+          <div className="text-center mb-4">
+            <h3 className="font-wild-west text-xl text-hooslearn-blue flex items-center justify-center gap-2">
+              <BookOpen size={20} /> Browse by Subject
+            </h3>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            {SUBJECTS.map((subject) => (
+              <button
+                key={subject}
+                onClick={() => navigate(`/subject/${subject}`)}
+                className="py-3 px-4 bg-white border-2 border-hooslearn-blue text-hooslearn-blue font-wild-west
+                           rounded-xl hover:bg-hooslearn-blue hover:text-white transition-all duration-200
+                           shadow-sm hover:shadow-md text-sm sm:text-base"
+              >
+                {subject}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Footer tagline */}
